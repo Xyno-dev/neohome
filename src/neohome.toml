@@ -1,0 +1,9 @@
+[light.mood_lights]
+enabled = true
+
+[switch.zayan_room_light_switch_1]
+enabled = false
+
+[switch.maaz_room_light_switch_1]
+enabled = false
+
