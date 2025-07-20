@@ -14,16 +14,18 @@ import os
 load_dotenv()
 
 class Device():
-    def __init__(self, entity_id: str, domain: str, name: str, headers: dict):
+    def __init__(self, entity_id: str, domain: str, name: str, headers: dict, ip: str, port: str = "8123"):
         self.id: str = entity_id
         self.domain: str = domain
         self.name: str = name
         self.headers: dict = headers
+        self.ip: str = ip
+        self.port: str = port
 
     def run_service(self, service: str, data: dict):
         json: dict = {"entity_id": self.id}
         jsonresponse = post(
-            f"http://100.64.0.1:8123/api/services/{self.domain}/{service}",
+            f"http://{self.ip}:{self.port}/api/services/{self.domain}/{service}",
             headers=self.headers,
             json=dict(json, **data)
         )
@@ -48,10 +50,6 @@ class NeoHomeApp(App):
             "content-type": "application/json",
         }
 
-        url: str = "http://100.64.0.1:8123/api/states"
-        jsonresponse = get(url, headers=self.headers)
-
-        self.response: dict = json.loads(jsonresponse.text)
         self.devices: list = self.load_devices()
 
     def load_devices(self) -> list:
@@ -68,9 +66,13 @@ class NeoHomeApp(App):
                 Device(f"{domain}.{device}",
                        domain,
                        data[domain][device]['name'],
-                       self.headers)
+                       self.headers,
+                       data['ip'],
+                       data['port'],
+                )
                 for domain in data
                 for device in data[domain]
+                if isinstance(data[domain], dict)
                 if data[domain][device]['enabled']
             ]
         except KeyError:
@@ -78,6 +80,10 @@ class NeoHomeApp(App):
         return devices
 
     def device_valid(self, device: Device) -> bool:
+        url: str = f"http://{device.ip}:{device.port}/api/states"
+        jsonresponse = get(url, headers=self.headers)
+
+        self.response: dict = json.loads(jsonresponse.text)
         devices: list = []
         for resdevice in self.response:
             devices.append(resdevice['entity_id'])
