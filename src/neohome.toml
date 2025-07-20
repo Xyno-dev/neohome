@@ -1,9 +1,8 @@
 [light.mood_lights]
 enabled = true
+name = "Mood Lights"
 
 [switch.zayan_room_light_switch_1]
-enabled = false
-
-[switch.maaz_room_light_switch_1]
-enabled = false
+enabled = true
+name = "Light Switch"
 
