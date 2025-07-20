@@ -15,25 +15,25 @@ load_dotenv()
 
 class Device():
     def __init__(self, entity_id: str, domain: str, name: str, headers: dict):
-        self.id = entity_id
-        self.domain = domain
-        self.name = name
-        self.headers = headers
+        self.id: str = entity_id
+        self.domain: str = domain
+        self.name: str = name
+        self.headers: dict = headers
 
     def run_service(self, service: str, data: dict):
-        json = {"entity_id": self.id}
+        json: dict = {"entity_id": self.id}
         jsonresponse = post(
             f"http://100.64.0.1:8123/api/services/{self.domain}/{service}",
             headers=self.headers,
             json=dict(json, **data)
         )
-        response = jsonresponse.json()
+        response: dict = jsonresponse.json()
         pprint.pp(response)
 
 class DeviceWidget(HorizontalGroup):
-    def __init__(self, device):
+    def __init__(self, device: Device):
         super().__init__()
-        self.device = device
+        self.device: Device = device
 
     def compose(self) -> ComposeResult:
         yield Label(self.device.name)
@@ -41,30 +41,30 @@ class DeviceWidget(HorizontalGroup):
 class NeoHomeApp(App):
     def __init__(self):
         super().__init__()
-        self.devices = []
+        self.devices: list = []
 
-        self.headers = {
+        self.headers: dict = {
             "Authorization": f"Bearer {os.getenv("token")}",
             "content-type": "application/json",
         }
 
-        url = "http://100.64.0.1:8123/api/states"
+        url: str = "http://100.64.0.1:8123/api/states"
         jsonresponse = get(url, headers=self.headers)
 
-        self.response = json.loads(jsonresponse.text)
-        self.devices = self.load_devices()
+        self.response: dict = json.loads(jsonresponse.text)
+        self.devices: list = self.load_devices()
 
     def load_devices(self) -> list:
         devices = []
 
         try:
             with open("neohome.toml", "rb") as f:
-                data = tomllib.load(f)
+                data: dict = tomllib.load(f)
         except FileNotFoundError:
             raise FileNotFoundError("neohome.toml not found")
 
         try:
-            devices = [
+            devices: list = [
                 Device(f"{domain}.{device}",
                        domain,
                        data[domain][device]['name'],
@@ -77,8 +77,8 @@ class NeoHomeApp(App):
             raise tomllib.TOMLDecodeError("toml syntax is poo")
         return devices
 
-    def device_valid(self, device) -> bool:
-        devices = []
+    def device_valid(self, device: Device) -> bool:
+        devices: list = []
         for resdevice in self.response:
             devices.append(resdevice['entity_id'])
         return True if device.id in devices else False
