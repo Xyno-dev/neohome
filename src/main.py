@@ -1,14 +1,12 @@
 from textual.app import App, ComposeResult
-from textual.containers import HorizontalGroup, VerticalScroll
-from textual.widgets import Button, Digits, Footer, Header, Label
+from textual.containers import HorizontalGroup
+from textual.widgets import Button, Label
 
 from requests import get, post
 from dotenv import load_dotenv
 import tomllib
-import pprint
 import json
 
-import time
 import os
 
 load_dotenv()
@@ -22,7 +20,7 @@ class Device():
         self.ip: str = ip
         self.port: str = port
 
-    def run_service(self, service: str, data: dict):
+    def run_service(self, service: str, data: dict = {}):
         json: dict = {"entity_id": self.id}
         jsonresponse = post(
             f"http://{self.ip}:{self.port}/api/services/{self.domain}/{service}",
@@ -30,15 +28,33 @@ class Device():
             json=dict(json, **data)
         )
         response: dict = jsonresponse.json()
-        pprint.pp(response)
+
+class ToggleButton(Button):
+    def __init__(self, device: Device):
+        super().__init__()
+        self.device: Device = device
+        self.label: str = "Turn On" if self.get_device_state() == "off" else "Turn Off"
+        
+    def get_device_state(self):
+        jsonresponse = get(
+            f"http://{self.device.ip}:{self.device.port}/api/states/{self.device.id}",
+            headers=self.device.headers
+        )
+        response: dict = jsonresponse.json()
+        return response['state']
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        self.device.run_service("turn_on" if self.get_device_state() == "off" else "turn_off")
+        self.label: str = "Turn On" if self.get_device_state() == "on" else "Turn Off" # type: ignore[override]
 
 class DeviceWidget(HorizontalGroup):
     def __init__(self, device: Device):
         super().__init__()
         self.device: Device = device
-
+    
     def compose(self) -> ComposeResult:
         yield Label(self.device.name)
+        yield ToggleButton(self.device)
 
 class NeoHomeApp(App):
     def __init__(self):

@@ -9,3 +9,7 @@ name = "Mood Lights"
 enabled = true
 name = "Light Switch"
 
+[switch.maaz_room_light_switch_1]
+enabled = true
+name = "poopoo man's room"
+
