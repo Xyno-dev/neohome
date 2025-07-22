@@ -9,10 +9,12 @@ import json
 
 import os
 
+from config import Config
+
 load_dotenv()
 
 class Device():
-    def __init__(self, entity_id: str, domain: str, name: str, headers: dict, ip: str, port: str = "8123"):
+    def __init__(self, entity_id: str, domain: str, name: str, headers: dict, ip: str, port: str):
         self.id: str = entity_id
         self.domain: str = domain
         self.name: str = name
@@ -66,33 +68,27 @@ class NeoHomeApp(App):
             "content-type": "application/json",
         }
 
+        configclass = Config(self)
+        self.config = configclass.config
+
         self.devices: list = self.load_devices()
 
     def load_devices(self) -> list:
         devices = []
 
-        try:
-            with open("neohome.toml", "rb") as f:
-                data: dict = tomllib.load(f)
-        except FileNotFoundError:
-            raise FileNotFoundError("neohome.toml not found")
-
-        try:
-            devices: list = [
-                Device(f"{domain}.{device}",
-                       domain,
-                       data[domain][device]['name'],
-                       self.headers,
-                       data['ip'],
-                       data['port'],
-                )
-                for domain in data
-                for device in data[domain]
-                if isinstance(data[domain], dict)
-                if data[domain][device]['enabled']
-            ]
-        except KeyError:
-            raise tomllib.TOMLDecodeError("toml syntax is poo")
+        devices: list = [
+            Device(f"{domain}.{device}",
+                   domain,
+                   self.config[domain][device]['name'],
+                   self.headers,
+                   self.config['ip'],
+                   self.config.get('port') or '8123',
+            )
+            for domain in self.config
+            for device in self.config[domain]
+            if isinstance(self.config[domain], dict)
+            if self.config[domain][device]['enabled']
+        ]
         return devices
 
     def device_valid(self, device: Device) -> bool:
