@@ -1,6 +1,6 @@
 from textual.app import App, ComposeResult
-from textual.containers import HorizontalGroup
-from textual.widgets import Button, Label
+from textual.containers import HorizontalGroup, VerticalGroup
+from textual.widgets import Button, Label, Switch
 
 from requests import get, post
 from dotenv import load_dotenv
@@ -31,11 +31,11 @@ class Device():
         )
         response: dict = jsonresponse.json()
 
-class ToggleButton(Button):
+class ToggleSwitch(Switch):
     def __init__(self, device: Device):
         super().__init__()
         self.device: Device = device
-        self.label: str = "Turn On" if self.get_device_state() == "off" else "Turn Off"
+        self.value = True if self.get_device_state() == 'on' else False
         
     def get_device_state(self):
         jsonresponse = get(
@@ -45,9 +45,9 @@ class ToggleButton(Button):
         response: dict = jsonresponse.json()
         return response['state']
 
-    def on_button_pressed(self, event: Button.Pressed) -> None:
+    def on_switch_changed(self, event: Switch.Changed) -> None:
         self.device.run_service("turn_on" if self.get_device_state() == "off" else "turn_off")
-        self.label: str = "Turn On" if self.get_device_state() == "on" else "Turn Off" # type: ignore[override]
+        self.value = True if self.get_device_state() == 'off' else False
 
 class DeviceWidget(HorizontalGroup):
     def __init__(self, device: Device):
@@ -56,7 +56,7 @@ class DeviceWidget(HorizontalGroup):
     
     def compose(self) -> ComposeResult:
         yield Label(self.device.name)
-        yield ToggleButton(self.device)
+        yield ToggleSwitch(self.device)
 
 class NeoHomeApp(App):
     def __init__(self):
