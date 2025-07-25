@@ -15,6 +15,7 @@ jsonresponse = requests.get(
     headers=headers,
 )
 response = jsonresponse.json()
-for service in response:
-    if service['domain'] == 'light':
-        pprint.pp(service)
+for domain in response:
+    if domain['domain'] == 'light':
+        if 'rgb_color' in domain['services']['turn_on']:
+            pprint.pp(domain['services']['turn_on'])
